@@ -1,0 +1,64 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.example.score.mapper.ScoreMapper">
+
+    <select id="selectScoreList" resultType="com.example.score.vo.ScoreVO">
+        SELECT sc.id,
+               sc.course_id,
+               c.course_code,
+               c.course_name,
+               sc.student_id,
+               st.student_no,
+               st.name AS student_name,
+               cl.class_name,
+               c.semester_id,
+               se.semester_name,
+               sc.usual_score,
+               sc.exam_score,
+               sc.final_score
+        FROM score sc
+                 JOIN course c ON sc.course_id = c.id
+                 JOIN student st ON sc.student_id = st.id
+                 LEFT JOIN class_info cl ON st.class_id = cl.id
+                 JOIN semester se ON c.semester_id = se.id
+        <where>
+            <if test="semesterId != null">
+                AND c.semester_id = #{semesterId}
+            </if>
+            <if test="courseId != null">
+                AND sc.course_id = #{courseId}
+            </if>
+            <if test="studentId != null">
+                AND sc.student_id = #{studentId}
+            </if>
+            <if test="teacherId != null">
+                AND c.teacher_id = #{teacherId}
+            </if>
+            <if test="keyword != null and keyword != ''">
+                AND (st.student_no LIKE CONCAT('%', #{keyword}, '%')
+                OR st.name LIKE CONCAT('%', #{keyword}, '%')
+                OR c.course_name LIKE CONCAT('%', #{keyword}, '%'))
+            </if>
+        </where>
+        ORDER BY se.start_date DESC, c.course_code, st.student_no
+    </select>
+
+    <select id="selectCourseStudents" resultType="com.example.score.vo.CourseStudentVO">
+        SELECT st.id AS student_id,
+               st.student_no,
+               st.name AS student_name,
+               cl.class_name,
+               st.class_id,
+               sc.id AS score_id,
+               sc.usual_score,
+               sc.exam_score,
+               sc.final_score
+        FROM course_student cs
+                 JOIN student st ON cs.student_id = st.id
+                 LEFT JOIN class_info cl ON st.class_id = cl.id
+                 LEFT JOIN score sc ON sc.course_id = cs.course_id AND sc.student_id = st.id
+        WHERE cs.course_id = #{courseId}
+        ORDER BY st.student_no
+    </select>
+</mapper>
