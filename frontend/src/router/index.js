@@ -8,6 +8,11 @@ const routes = [
     component: () => import('../views/Login.vue')
   },
   {
+    path: '/register',
+    name: 'register',
+    component: () => import('../views/Register.vue')
+  },
+  {
     path: '/',
     component: () => import('../layout/MainLayout.vue'),
     children: [
@@ -87,7 +92,7 @@ const router = createRouter({
 
 router.beforeEach((to) => {
   const user = getUser()
-  if (to.path === '/login') {
+  if (to.path === '/login' || to.path === '/register') {
     return user ? homeByRole(user.role) : true
   }
   if (!user) {

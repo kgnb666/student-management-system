@@ -49,10 +49,28 @@ public class StudentService {
 
     @Transactional
     public void create(Student student) {
+        saveStudent(student, "123456");
+    }
+
+    @Transactional
+    public void register(Student student, String password) {
+        if (password == null || password.length() < 6) {
+            throw new BusinessException("密码不能少于 6 位");
+        }
+        User existingUser = userMapper.selectOne(new LambdaQueryWrapper<User>()
+                .eq(User::getUsername, student.getStudentNo()));
+        if (existingUser != null || studentMapper.selectOne(new LambdaQueryWrapper<Student>()
+                .eq(Student::getStudentNo, student.getStudentNo())) != null) {
+            throw new BusinessException("该学号已注册");
+        }
+        saveStudent(student, password);
+    }
+
+    private void saveStudent(Student student, String password) {
         checkStudent(student);
         User user = new User();
         user.setUsername(student.getStudentNo());
-        user.setPassword(passwordEncoder.encode("123456"));
+        user.setPassword(passwordEncoder.encode(password));
         user.setRole("STUDENT");
         user.setRealName(student.getName());
         user.setStatus(student.getStatus() == null ? 1 : student.getStatus());

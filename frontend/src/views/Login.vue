@@ -23,6 +23,9 @@
           <el-button type="primary" size="large" :loading="loading" class="login-button" @click="handleLogin">
             登录
           </el-button>
+          <el-button link type="primary" class="register-link" @click="router.push('/register')">
+            学生注册
+          </el-button>
         </el-form>
 
         <div class="demo-accounts">
@@ -38,15 +41,16 @@
 
 <script setup>
 import { reactive, ref } from 'vue'
-import { useRouter } from 'vue-router'
+import { useRoute, useRouter } from 'vue-router'
 import { ElMessage } from 'element-plus'
 import { login } from '../api/auth'
 import { homeByRole, saveUser } from '../auth'
 
 const router = useRouter()
+const route = useRoute()
 const loading = ref(false)
 const form = reactive({
-  username: '',
+  username: route.query.username || '',
   password: ''
 })
 
@@ -105,6 +109,11 @@ async function handleLogin() {
 
 .login-button {
   width: 100%;
+}
+
+.register-link {
+  display: block;
+  margin: 14px auto 0;
 }
 
 .demo-accounts {
