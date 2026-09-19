@@ -94,7 +94,9 @@ nginx -t
 systemctl reload nginx
 
 for _ in $(seq 1 60); do
-    if curl -fsS -H 'Host: 8.138.161.154' http://127.0.0.1/ >/dev/null; then
+    if curl -fsS -X POST http://127.0.0.1:889/api/auth/login \
+        -H 'Content-Type: application/json' \
+        -d '{"username":"admin","password":"admin123"}' >/dev/null; then
         echo "部署完成：http://8.138.161.154/"
         exit 0
     fi
