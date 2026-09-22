@@ -25,8 +25,9 @@ NGINX_CONF_DIR="${NGINX_CONF_DIR:-/www/server/panel/vhost/nginx}"
 NGINX_CONF_NAME="${NGINX_CONF_NAME:-student_management.conf}"
 
 # 数据库容器与网络
-DB_CONTAINER="${DB_CONTAINER:-campus-ledger-mysql}"
-DB_NETWORK="${DB_NETWORK:-campus-ledger_default}"
+# 默认指向拆分后的独立数据库（由 deploy/decouple-database.sh 创建）
+DB_CONTAINER="${DB_CONTAINER:-student-score-mysql}"
+DB_NETWORK="${DB_NETWORK:-student-score_default}"
 DB_NAME="${DB_NAME:-student_score}"
 DB_USER="${DB_USER:-student_score}"
 
@@ -41,8 +42,16 @@ BACKEND_XMX="${BACKEND_XMX:-256m}"
 JAR_PATH="$APP_DIR/backend/target/student-score-1.0.0.jar"
 FRONTEND_DIR="$APP_DIR/frontend/dist"
 
-DB_PASSWORD="$(openssl rand -hex 16)"
-JWT_SECRET="$(openssl rand -hex 32)"
+# 默认复用已有的 backend.env，避免重复部署时把数据库密码和 JWT 密钥换掉
+# （换掉会让所有在线用户被强制重新登录，数据库账号也要跟着改）。需要轮换时设 ROTATE_SECRETS=1。
+ROTATE_SECRETS="${ROTATE_SECRETS:-0}"
+FORCE_NGINX_CONF="${FORCE_NGINX_CONF:-0}"
+if [[ "$ROTATE_SECRETS" != "1" && -f "$APP_DIR/backend.env" ]]; then
+    DB_PASSWORD="$(grep '^SPRING_DATASOURCE_PASSWORD=' "$APP_DIR/backend.env" | cut -d= -f2- || true)"
+    JWT_SECRET="$(grep '^JWT_SECRET=' "$APP_DIR/backend.env" | cut -d= -f2- || true)"
+fi
+DB_PASSWORD="${DB_PASSWORD:-$(openssl rand -hex 16)}"
+JWT_SECRET="${JWT_SECRET:-$(openssl rand -hex 32)}"
 
 if [[ ! -f "$JAR_PATH" ]]; then
     echo "后端 JAR 不存在：$JAR_PATH"
@@ -108,9 +117,17 @@ docker run -d \
     -XX:+UseSerialGC \
     -jar /app/student-management.jar >/dev/null
 
-echo "==> 写入 nginx 配置：$NGINX_CONF_DIR/$NGINX_CONF_NAME"
+echo "==> 检查 nginx 配置：$NGINX_CONF_DIR/$NGINX_CONF_NAME"
 mkdir -p "$NGINX_CONF_DIR"
-cat > "$NGINX_CONF_DIR/$NGINX_CONF_NAME" <<EOF
+NGINX_CONF_PATH="$NGINX_CONF_DIR/$NGINX_CONF_NAME"
+if [[ -f "$NGINX_CONF_PATH" && "$FORCE_NGINX_CONF" != "1" ]]; then
+    # 该文件可能已被追加过其他项目的内容（例如同服务器的其他反代、缓存策略），
+    # 直接覆盖会误删，因此默认只提示不写入；确需覆盖时设 FORCE_NGINX_CONF=1。
+    echo "    配置已存在，跳过写入（如需按模板重建请设 FORCE_NGINX_CONF=1）"
+    echo "    如需补缓存头，可执行：python3 deploy/patch-nginx-cache.py $NGINX_CONF_PATH"
+else
+    [[ -f "$NGINX_CONF_PATH" ]] && cp "$NGINX_CONF_PATH" "$NGINX_CONF_PATH.bak-$(date +%Y%m%d-%H%M%S)"
+    cat > "$NGINX_CONF_PATH" <<EOF
 server {
     listen ${SITE_PORT};
     listen ${EXTRA_SITE_PORT};
@@ -130,6 +147,8 @@ server {
     }
 }
 EOF
+    echo "    已写入 nginx 配置"
+fi
 
 nginx -t
 systemctl reload nginx
