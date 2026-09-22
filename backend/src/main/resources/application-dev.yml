@@ -1,0 +1,9 @@
+# 开发环境配置：输出 MyBatis 执行的 SQL，便于调试。
+# 启用方式：SPRING_PROFILES_ACTIVE=dev 或 mvn spring-boot:run -Dspring-boot.run.profiles=dev
+mybatis-plus:
+  configuration:
+    log-impl: org.apache.ibatis.logging.stdout.StdOutImpl
+
+logging:
+  level:
+    com.example.score: DEBUG

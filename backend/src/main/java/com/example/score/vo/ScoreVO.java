@@ -20,4 +20,6 @@ public class ScoreVO {
     private BigDecimal usualScore;
     private BigDecimal examScore;
     private BigDecimal finalScore;
+    private Long updateBy;
+    private String updaterName;
 }

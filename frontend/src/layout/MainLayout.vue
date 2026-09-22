@@ -1,7 +1,10 @@
 <template>
   <el-container class="layout">
     <el-aside width="220px" class="aside">
-      <div class="brand">学生成绩管理系统</div>
+      <div class="brand">
+        <span class="brand-full">学生成绩管理系统</span>
+        <span class="brand-short">成绩</span>
+      </div>
       <el-menu
         router
         :default-active="route.path"
@@ -20,7 +23,11 @@
       <el-header class="header">
         <div class="page-title">{{ route.meta.title }}</div>
         <div class="user-area">
-          <span>{{ roleName }}：{{ user?.realName }}</span>
+          <span class="user-name">{{ roleName }}：{{ user?.realName }}</span>
+          <el-button link type="primary" @click="router.push('/change-password')">
+            <el-icon><Key /></el-icon>
+            修改密码
+          </el-button>
           <el-button link type="danger" @click="logout">
             <el-icon><SwitchButton /></el-icon>
             退出登录
@@ -37,12 +44,13 @@
 <script setup>
 import { computed } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
-import { ElMessageBox } from 'element-plus'
 import {
   Calendar,
   Collection,
   DataAnalysis,
   DocumentChecked,
+  Key,
+  Odometer,
   Reading,
   School,
   SwitchButton,
@@ -56,6 +64,7 @@ const user = getUser()
 
 const roleMenus = {
   ADMIN: [
+    { title: '首页概览', path: '/admin/dashboard', icon: Odometer },
     { title: '学生管理', path: '/admin/students', icon: User },
     { title: '教师管理', path: '/admin/teachers', icon: School },
     { title: '班级管理', path: '/admin/classes', icon: Collection },
@@ -140,5 +149,55 @@ function logout() {
   gap: 18px;
   align-items: center;
   color: #606266;
+}
+
+.brand-short {
+  display: none;
+}
+
+/* 移动端：侧边栏收成图标条，菜单文字与用户名隐藏，避免挤压内容区 */
+@media (max-width: 768px) {
+  .aside {
+    width: 64px !important;
+  }
+
+  .brand {
+    padding: 0;
+    font-size: 14px;
+    text-align: center;
+  }
+
+  .brand-full {
+    display: none;
+  }
+
+  .brand-short {
+    display: inline;
+  }
+
+  .aside :deep(.el-menu-item) {
+    justify-content: center;
+    padding: 0 !important;
+  }
+
+  .aside :deep(.el-menu-item span) {
+    display: none;
+  }
+
+  .header {
+    padding: 0 12px;
+  }
+
+  .page-title {
+    font-size: 16px;
+  }
+
+  .user-area {
+    gap: 10px;
+  }
+
+  .user-name {
+    display: none;
+  }
 }
 </style>

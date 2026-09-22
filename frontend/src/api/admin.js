@@ -1,5 +1,9 @@
 import request from './request'
 
+export function getDashboard() {
+  return request.get('/admin/dashboard')
+}
+
 export function getStudents(params) {
   return request.get('/admin/students', { params })
 }
@@ -18,6 +22,10 @@ export function deleteStudent(id) {
 
 export function resetStudentPassword(id) {
   return request.post(`/admin/students/${id}/reset-password`)
+}
+
+export function approveStudent(id) {
+  return request.post(`/admin/students/${id}/approve`)
 }
 
 export function getTeachers(params) {
@@ -100,8 +108,16 @@ export function assignCourseStudents(courseId, studentIds) {
   return request.put(`/admin/courses/${courseId}/students`, { studentIds })
 }
 
+export function unlockCourseScores(courseId) {
+  return request.post(`/admin/courses/${courseId}/unlock`)
+}
+
 export function getScores(params) {
   return request.get('/admin/scores', { params })
+}
+
+export function getScoreLogs(params) {
+  return request.get('/admin/score-logs', { params })
 }
 
 export function addScore(data) {

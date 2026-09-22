@@ -19,3 +19,7 @@ export function getMyScores(params) {
 export function getMyStatistics(params) {
   return request.get('/student/statistics', { params })
 }
+
+export function getMyGpa(params) {
+  return request.get('/student/gpa', { params })
+}

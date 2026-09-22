@@ -8,7 +8,7 @@
         style="width: 220px"
         @keyup.enter="loadTeachers"
       />
-      <el-button type="primary" @click="loadTeachers">查询</el-button>
+      <el-button type="primary" @click="searchTeachers">查询</el-button>
       <el-button @click="resetQuery">重置</el-button>
       <div class="spacer"></div>
       <el-button type="primary" @click="openAdd">新增教师</el-button>
@@ -35,6 +35,18 @@
         </template>
       </el-table-column>
     </el-table>
+
+    <el-pagination
+      v-if="pagination.total > 0"
+      class="pagination"
+      layout="total, sizes, prev, pager, next"
+      :total="pagination.total"
+      :current-page="pagination.page"
+      :page-size="pagination.size"
+      :page-sizes="[10, 20, 50]"
+      @current-change="handlePageChange"
+      @size-change="handleSizeChange"
+    />
 
     <el-dialog v-model="dialogVisible" :title="form.id ? '编辑教师' : '新增教师'" width="520px">
       <el-form :model="form" label-width="90px">
@@ -73,7 +85,6 @@
 
 <script setup>
 import { onMounted, reactive, ref } from 'vue'
-import { ElMessage, ElMessageBox } from 'element-plus'
 import {
   addTeacher,
   deleteTeacher,
@@ -87,6 +98,7 @@ const saving = ref(false)
 const dialogVisible = ref(false)
 const teachers = ref([])
 const keyword = ref('')
+const pagination = reactive({ page: 1, size: 10, total: 0 })
 const emptyForm = {
   id: null,
   teacherNo: '',
@@ -101,14 +113,37 @@ const form = reactive({ ...emptyForm })
 async function loadTeachers() {
   loading.value = true
   try {
-    teachers.value = await getTeachers({ keyword: keyword.value })
+    const data = await getTeachers({
+      keyword: keyword.value,
+      page: pagination.page,
+      size: pagination.size
+    })
+    teachers.value = data.records
+    pagination.total = data.total
   } finally {
     loading.value = false
   }
 }
 
+function searchTeachers() {
+  pagination.page = 1
+  loadTeachers()
+}
+
+function handlePageChange(page) {
+  pagination.page = page
+  loadTeachers()
+}
+
+function handleSizeChange(size) {
+  pagination.size = size
+  pagination.page = 1
+  loadTeachers()
+}
+
 function resetQuery() {
   keyword.value = ''
+  pagination.page = 1
   loadTeachers()
 }
 
@@ -141,20 +176,24 @@ async function saveTeacher() {
 function resetPassword(row) {
   ElMessageBox.confirm(`确定将 ${row.name} 的密码重置为 123456 吗？`, '提示', {
     type: 'warning'
-  }).then(async () => {
-    await resetTeacherPassword(row.id)
-    ElMessage.success('密码已重置为 123456')
-  }).catch(() => {})
+  })
+    .then(async () => {
+      await resetTeacherPassword(row.id)
+      ElMessage.success('密码已重置为 123456')
+    })
+    .catch(() => {})
 }
 
 function removeTeacher(row) {
   ElMessageBox.confirm(`确定删除教师 ${row.name} 吗？`, '提示', {
     type: 'warning'
-  }).then(async () => {
-    await deleteTeacher(row.id)
-    ElMessage.success('删除成功')
-    await loadTeachers()
-  }).catch(() => {})
+  })
+    .then(async () => {
+      await deleteTeacher(row.id)
+      ElMessage.success('删除成功')
+      await loadTeachers()
+    })
+    .catch(() => {})
 }
 
 onMounted(loadTeachers)

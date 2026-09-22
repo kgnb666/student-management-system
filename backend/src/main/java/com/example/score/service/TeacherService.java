@@ -1,6 +1,7 @@
 package com.example.score.service;
 
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
+import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.example.score.entity.ClassInfo;
 import com.example.score.entity.Course;
 import com.example.score.entity.Teacher;
@@ -10,6 +11,7 @@ import com.example.score.mapper.ClassInfoMapper;
 import com.example.score.mapper.CourseMapper;
 import com.example.score.mapper.TeacherMapper;
 import com.example.score.mapper.UserMapper;
+import com.example.score.vo.PageResult;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
@@ -26,6 +28,7 @@ public class TeacherService {
     private final CourseMapper courseMapper;
     private final ClassInfoMapper classInfoMapper;
     private final PasswordEncoder passwordEncoder;
+    private final UserAuthCache userAuthCache;
 
     public List<Teacher> list(String keyword) {
         return teacherMapper.selectList(new LambdaQueryWrapper<Teacher>()
@@ -34,6 +37,17 @@ public class TeacherService {
                         .or()
                         .like(Teacher::getName, keyword))
                 .orderByAsc(Teacher::getTeacherNo));
+    }
+
+    public PageResult<Teacher> listPaged(String keyword, Long page, Long size) {
+        LambdaQueryWrapper<Teacher> wrapper = new LambdaQueryWrapper<Teacher>()
+                .and(keyword != null && !keyword.isBlank(), w -> w
+                        .like(Teacher::getTeacherNo, keyword)
+                        .or()
+                        .like(Teacher::getName, keyword))
+                .orderByAsc(Teacher::getTeacherNo);
+        Page<Teacher> pageParam = new Page<>(PageResult.normalizeCurrent(page), PageResult.normalizeSize(size));
+        return PageResult.of(teacherMapper.selectPage(pageParam, wrapper));
     }
 
     public Teacher getByUserId(Long userId) {
@@ -56,12 +70,14 @@ public class TeacherService {
     @Transactional
     public void create(Teacher teacher) {
         checkTeacher(teacher);
+        checkTeacherNoAvailable(teacher.getTeacherNo(), null, null);
         User user = new User();
         user.setUsername(teacher.getTeacherNo());
         user.setPassword(passwordEncoder.encode("123456"));
         user.setRole("TEACHER");
         user.setRealName(teacher.getName());
         user.setStatus(teacher.getStatus() == null ? 1 : teacher.getStatus());
+        user.setNeedChangePassword(1);
         userMapper.insert(user);
 
         teacher.setUserId(user.getId());
@@ -75,6 +91,7 @@ public class TeacherService {
     public void update(Teacher teacher) {
         checkTeacher(teacher);
         Teacher oldTeacher = getById(teacher.getId());
+        checkTeacherNoAvailable(teacher.getTeacherNo(), teacher.getId(), oldTeacher.getUserId());
         teacherMapper.updateById(teacher);
 
         User user = userMapper.selectById(oldTeacher.getUserId());
@@ -82,7 +99,12 @@ public class TeacherService {
             user.setUsername(teacher.getTeacherNo());
             user.setRealName(teacher.getName());
             user.setStatus(teacher.getStatus());
+            // 账号状态发生变化时让旧 token 立即失效。
+            if (teacher.getStatus() != null && !teacher.getStatus().equals(oldTeacher.getStatus())) {
+                bumpTokenVersion(user);
+            }
             userMapper.updateById(user);
+            userAuthCache.evict(user.getId());
         }
     }
 
@@ -102,6 +124,7 @@ public class TeacherService {
 
         teacherMapper.deleteById(id);
         userMapper.deleteById(teacher.getUserId());
+        userAuthCache.evict(teacher.getUserId());
     }
 
     public void resetPassword(Long id) {
@@ -111,7 +134,33 @@ public class TeacherService {
             throw new BusinessException("教师账号不存在");
         }
         user.setPassword(passwordEncoder.encode("123456"));
+        // 密码被重置后需要本人修改初始密码，旧 token 同时失效。
+        user.setNeedChangePassword(1);
+        bumpTokenVersion(user);
         userMapper.updateById(user);
+        userAuthCache.evict(user.getId());
+    }
+
+    private void bumpTokenVersion(User user) {
+        user.setTokenVersion((user.getTokenVersion() == null ? 0 : user.getTokenVersion()) + 1);
+    }
+
+    /**
+     * 改工号/新增教师前先查重，给出明确提示，而不是等数据库唯一键报错。
+     */
+    private void checkTeacherNoAvailable(String teacherNo, Long excludeTeacherId, Long excludeUserId) {
+        Long userCount = userMapper.selectCount(new LambdaQueryWrapper<User>()
+                .eq(User::getUsername, teacherNo)
+                .ne(excludeUserId != null, User::getId, excludeUserId));
+        if (userCount != null && userCount > 0) {
+            throw new BusinessException("该工号已被占用");
+        }
+        Long teacherCount = teacherMapper.selectCount(new LambdaQueryWrapper<Teacher>()
+                .eq(Teacher::getTeacherNo, teacherNo)
+                .ne(excludeTeacherId != null, Teacher::getId, excludeTeacherId));
+        if (teacherCount != null && teacherCount > 0) {
+            throw new BusinessException("该工号已被占用");
+        }
     }
 
     private void checkTeacher(Teacher teacher) {

@@ -33,7 +33,7 @@ body {
 
 .stat-grid {
   display: grid;
-  grid-template-columns: repeat(5, minmax(130px, 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
   gap: 16px;
   margin-bottom: 20px;
 }
@@ -66,5 +66,61 @@ body {
 @media (max-width: 1100px) {
   .stat-grid {
     grid-template-columns: repeat(2, minmax(130px, 1fr));
+  }
+}
+
+/* 移动端适配：窄屏下压缩留白、弹窗铺满、表格横向滚动 */
+@media (max-width: 768px) {
+  .page-card {
+    min-height: auto;
+  }
+
+  .stat-grid {
+    grid-template-columns: repeat(2, minmax(120px, 1fr));
+    gap: 10px;
+  }
+
+  .stat-card {
+    padding: 14px 10px;
+  }
+
+  .stat-value {
+    font-size: 20px;
+  }
+
+  .toolbar {
+    gap: 8px;
+    margin-bottom: 12px;
+  }
+
+  .toolbar .el-select,
+  .toolbar .el-input {
+    width: 100% !important;
+  }
+
+  .toolbar .spacer {
+    display: none;
+  }
+
+  .chart-box {
+    height: 260px;
+  }
+
+  .el-main {
+    padding: 12px;
+  }
+
+  .el-dialog {
+    width: 92% !important;
+    margin-top: 8vh !important;
+  }
+
+  .el-message-box {
+    width: 90% !important;
+    max-width: 420px;
+  }
+
+  .el-table {
+    font-size: 13px;
   }
 }

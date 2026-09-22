@@ -27,7 +27,7 @@ export function getToken() {
 
 export function homeByRole(role) {
   if (role === 'ADMIN') {
-    return '/admin/students'
+    return '/admin/dashboard'
   }
   if (role === 'TEACHER') {
     return '/teacher/courses'

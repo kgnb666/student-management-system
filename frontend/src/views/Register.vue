@@ -34,7 +34,12 @@
             </el-select>
           </el-form-item>
           <el-form-item label="密码" required>
-            <el-input v-model="form.password" type="password" placeholder="至少 6 位" show-password />
+            <el-input
+              v-model="form.password"
+              type="password"
+              placeholder="至少 6 位"
+              show-password
+            />
           </el-form-item>
           <el-form-item label="确认密码" required>
             <el-input
@@ -58,7 +63,6 @@
 <script setup>
 import { onMounted, reactive, ref } from 'vue'
 import { useRouter } from 'vue-router'
-import { ElMessage } from 'element-plus'
 import { getRegisterClasses, register } from '../api/auth'
 
 const router = useRouter()
@@ -91,7 +95,7 @@ async function handleRegister() {
   submitting.value = true
   try {
     await register(form)
-    ElMessage.success('注册成功，请登录')
+    ElMessage.success('注册申请已提交，请等待管理员审核通过后再登录')
     router.replace({ path: '/login', query: { username: form.studentNo } })
   } finally {
     submitting.value = false

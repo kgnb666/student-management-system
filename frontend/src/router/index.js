@@ -13,9 +13,19 @@ const routes = [
     component: () => import('../views/Register.vue')
   },
   {
+    path: '/change-password',
+    name: 'changePassword',
+    component: () => import('../views/ChangePassword.vue')
+  },
+  {
     path: '/',
     component: () => import('../layout/MainLayout.vue'),
     children: [
+      {
+        path: 'admin/dashboard',
+        component: () => import('../views/admin/Dashboard.vue'),
+        meta: { role: 'ADMIN', title: '首页概览' }
+      },
       {
         path: 'admin/students',
         component: () => import('../views/admin/StudentList.vue'),
@@ -97,6 +107,10 @@ router.beforeEach((to) => {
   }
   if (!user) {
     return '/login'
+  }
+  // 管理员新建或重置密码后，必须先修改初始密码
+  if (user.needChangePassword === 1) {
+    return to.path === '/change-password' ? true : '/change-password'
   }
   if (to.path === '/') {
     return homeByRole(user.role)

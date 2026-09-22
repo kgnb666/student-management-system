@@ -1,0 +1,50 @@
+# 一条命令启动完整环境：docker compose up -d --build
+# 可选环境变量（写入 .env 或直接 export）：
+#   APP_PORT       前端对外端口，默认 8081
+#   MYSQL_PASSWORD MySQL 密码，默认 123456
+#   JWT_SECRET     后端 JWT 密钥，默认使用演示值，生产环境必须修改
+services:
+  mysql:
+    image: mysql:8.4
+    container_name: student-score-mysql
+    restart: unless-stopped
+    command: --character-set-server=utf8mb4 --collation-server=utf8mb4_unicode_ci
+    environment:
+      MYSQL_ROOT_PASSWORD: ${MYSQL_PASSWORD:-123456}
+      TZ: Asia/Shanghai
+    volumes:
+      - mysql-data:/var/lib/mysql
+      # 首次启动时自动导入建表与演示数据
+      - ./sql/student_score.sql:/docker-entrypoint-initdb.d/01-init.sql:ro
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "127.0.0.1", "-uroot", "-p${MYSQL_PASSWORD:-123456}"]
+      interval: 10s
+      timeout: 5s
+      retries: 12
+
+  backend:
+    build: ./backend
+    container_name: student-score-backend
+    restart: unless-stopped
+    depends_on:
+      mysql:
+        condition: service_healthy
+    environment:
+      SPRING_DATASOURCE_URL: jdbc:mysql://mysql:3306/student_score?useUnicode=true&characterEncoding=utf8&serverTimezone=Asia/Shanghai&allowPublicKeyRetrieval=true&useSSL=false
+      SPRING_DATASOURCE_USERNAME: root
+      SPRING_DATASOURCE_PASSWORD: ${MYSQL_PASSWORD:-123456}
+      JWT_SECRET: ${JWT_SECRET:-student-score-system-jwt-secret-key-2026}
+      TOMCAT_PROTOCOL: ${TOMCAT_PROTOCOL:-nio2}
+      TZ: Asia/Shanghai
+
+  frontend:
+    build: ./frontend
+    container_name: student-score-frontend
+    restart: unless-stopped
+    depends_on:
+      - backend
+    ports:
+      - "${APP_PORT:-8081}:80"
+
+volumes:
+  mysql-data:

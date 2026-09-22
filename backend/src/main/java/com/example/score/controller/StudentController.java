@@ -11,6 +11,7 @@ import com.example.score.vo.CourseVO;
 import com.example.score.vo.ScoreStatisticsVO;
 import com.example.score.vo.ScoreVO;
 import com.example.score.vo.StudentVO;
+import com.example.score.vo.StudentGpaVO;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestAttribute;
@@ -48,9 +49,15 @@ public class StudentController {
     }
 
     @GetMapping("/scores")
-    public Result<List<ScoreVO>> scores(@RequestAttribute("userId") Long userId,
-                                        @RequestParam(required = false) Long semesterId) {
+    public Result<?> scores(@RequestAttribute("userId") Long userId,
+                            @RequestParam(required = false) Long semesterId,
+                            @RequestParam(required = false) Long page,
+                            @RequestParam(required = false) Long size) {
         Student student = getStudent(userId);
+        if (page != null) {
+            return Result.success(scoreService.listPaged(
+                    semesterId, null, student.getId(), null, null, page, size));
+        }
         return Result.success(scoreService.list(semesterId, null, student.getId(), null, null));
     }
 
@@ -59,6 +66,13 @@ public class StudentController {
                                                 @RequestParam(required = false) Long semesterId) {
         Student student = getStudent(userId);
         return Result.success(scoreService.studentStatistics(student.getId(), semesterId));
+    }
+
+    @GetMapping("/gpa")
+    public Result<StudentGpaVO> gpa(@RequestAttribute("userId") Long userId,
+                                    @RequestParam(required = false) Long semesterId) {
+        Student student = getStudent(userId);
+        return Result.success(scoreService.studentGpa(student.getId(), semesterId));
     }
 
     private Student getStudent(Long userId) {

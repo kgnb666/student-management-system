@@ -20,7 +20,13 @@
               show-password
             />
           </el-form-item>
-          <el-button type="primary" size="large" :loading="loading" class="login-button" @click="handleLogin">
+          <el-button
+            type="primary"
+            size="large"
+            :loading="loading"
+            class="login-button"
+            @click="handleLogin"
+          >
             登录
           </el-button>
           <el-button link type="primary" class="register-link" @click="router.push('/register')">
@@ -28,11 +34,13 @@
           </el-button>
         </el-form>
 
-        <div class="demo-accounts">
-          <div class="demo-title">演示账号</div>
-          <div>管理员：admin / admin123</div>
-          <div>教师：t001 / 123456</div>
-          <div>学生：2023001 / 123456</div>
+        <div v-if="showDemoAccounts" class="demo-accounts">
+          <div class="demo-title">演示账号（点击自动填充）</div>
+          <div class="demo-item" @click="fillDemo('admin', 'admin123')">
+            管理员：admin / admin123
+          </div>
+          <div class="demo-item" @click="fillDemo('t001', '123456')">教师：t001 / 123456</div>
+          <div class="demo-item" @click="fillDemo('2023001', '123456')">学生：2023001 / 123456</div>
         </div>
       </el-card>
     </div>
@@ -42,17 +50,26 @@
 <script setup>
 import { reactive, ref } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
-import { ElMessage } from 'element-plus'
 import { login } from '../api/auth'
 import { homeByRole, saveUser } from '../auth'
 
 const router = useRouter()
 const route = useRoute()
 const loading = ref(false)
+// 演示账号默认只在本地开发环境展示；显示/隐藏也可通过 VITE_SHOW_DEMO_ACCOUNTS 显式控制。
+const showDemoAccounts = import.meta.env.VITE_SHOW_DEMO_ACCOUNTS
+  ? import.meta.env.VITE_SHOW_DEMO_ACCOUNTS === 'true'
+  : import.meta.env.DEV
 const form = reactive({
   username: route.query.username || '',
   password: ''
 })
+
+/** 点击演示账号自动填充，避免演示时手输账号密码 */
+function fillDemo(username, password) {
+  form.username = username
+  form.password = password
+}
 
 async function handleLogin() {
   if (!form.username || !form.password) {
@@ -63,6 +80,11 @@ async function handleLogin() {
   try {
     const user = await login(form)
     saveUser(user)
+    if (user.needChangePassword === 1) {
+      ElMessage.warning('首次登录请先修改初始密码')
+      router.replace('/change-password')
+      return
+    }
     router.replace(homeByRole(user.role))
   } finally {
     loading.value = false
@@ -129,6 +151,18 @@ async function handleLogin() {
   margin-bottom: 4px;
   color: #303133;
   font-weight: 600;
+}
+
+.demo-item {
+  padding: 2px 6px;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: background-color 0.2s;
+}
+
+.demo-item:hover {
+  background-color: #ecf5ff;
+  color: #409eff;
 }
 
 @media (max-width: 900px) {

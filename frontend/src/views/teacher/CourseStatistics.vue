@@ -11,7 +11,13 @@
         />
       </el-select>
       <span>班级：</span>
-      <el-select v-model="classId" clearable placeholder="全部班级" style="width: 190px" @change="loadStatistics">
+      <el-select
+        v-model="classId"
+        clearable
+        placeholder="全部班级"
+        style="width: 190px"
+        @change="loadStatistics"
+      >
         <el-option
           v-for="item in classOptions"
           :key="item.id"

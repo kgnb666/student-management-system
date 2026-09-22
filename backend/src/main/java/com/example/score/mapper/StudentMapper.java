@@ -1,6 +1,7 @@
 package com.example.score.mapper;
 
 import com.baomidou.mybatisplus.core.mapper.BaseMapper;
+import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.example.score.entity.Student;
 import com.example.score.vo.StudentVO;
 import org.apache.ibatis.annotations.Param;
@@ -9,7 +10,14 @@ import java.util.List;
 
 public interface StudentMapper extends BaseMapper<Student> {
 
-    List<StudentVO> selectStudentList(@Param("keyword") String keyword, @Param("classId") Long classId);
+    List<StudentVO> selectStudentList(@Param("keyword") String keyword,
+                                      @Param("classId") Long classId,
+                                      @Param("status") Integer status);
+
+    IPage<StudentVO> selectStudentListPage(IPage<StudentVO> page,
+                                           @Param("keyword") String keyword,
+                                           @Param("classId") Long classId,
+                                           @Param("status") Integer status);
 
     StudentVO selectStudentVO(@Param("id") Long id);
 }

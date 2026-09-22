@@ -14,6 +14,13 @@
           </el-tag>
         </template>
       </el-table-column>
+      <el-table-column label="成绩状态" width="110">
+        <template #default="{ row }">
+          <el-tag :type="row.scoreStatus === 1 ? 'success' : 'warning'">
+            {{ row.scoreStatus === 1 ? '已提交' : '录入中' }}
+          </el-tag>
+        </template>
+      </el-table-column>
       <el-table-column label="操作" width="140" fixed="right">
         <template #default="{ row }">
           <el-button link type="primary" @click="goGrades(row.id)">录入成绩</el-button>

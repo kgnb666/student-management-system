@@ -1,0 +1,46 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.example.score.mapper.ScoreChangeLogMapper">
+
+    <sql id="logListQuery">
+        SELECT l.id,
+               l.score_id,
+               l.course_id,
+               c.course_name,
+               l.student_id,
+               st.student_no,
+               st.name AS student_name,
+               l.operator_name,
+               l.operator_role,
+               l.action,
+               l.before_usual_score,
+               l.before_exam_score,
+               l.before_final_score,
+               l.after_usual_score,
+               l.after_exam_score,
+               l.after_final_score,
+               l.remark,
+               l.create_time
+        FROM score_change_log l
+                 LEFT JOIN course c ON l.course_id = c.id
+                 LEFT JOIN student st ON l.student_id = st.id
+        <where>
+            <if test="courseId != null">
+                AND l.course_id = #{courseId}
+            </if>
+            <if test="studentId != null">
+                AND l.student_id = #{studentId}
+            </if>
+        </where>
+        ORDER BY l.create_time DESC, l.id DESC
+    </sql>
+
+    <select id="selectLogList" resultType="com.example.score.vo.ScoreChangeLogVO">
+        <include refid="logListQuery"/>
+    </select>
+
+    <select id="selectLogListPage" resultType="com.example.score.vo.ScoreChangeLogVO">
+        <include refid="logListQuery"/>
+    </select>
+</mapper>

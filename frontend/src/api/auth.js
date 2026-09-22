@@ -11,3 +11,7 @@ export function register(data) {
 export function getRegisterClasses() {
   return request.get('/auth/classes')
 }
+
+export function changePassword(data) {
+  return request.post('/auth/change-password', data)
+}

@@ -32,10 +32,20 @@
           <el-input v-model="form.semesterName" placeholder="例如：2025-2026学年第一学期" />
         </el-form-item>
         <el-form-item label="开始日期" required>
-          <el-date-picker v-model="form.startDate" type="date" value-format="YYYY-MM-DD" style="width: 100%" />
+          <el-date-picker
+            v-model="form.startDate"
+            type="date"
+            value-format="YYYY-MM-DD"
+            style="width: 100%"
+          />
         </el-form-item>
         <el-form-item label="结束日期" required>
-          <el-date-picker v-model="form.endDate" type="date" value-format="YYYY-MM-DD" style="width: 100%" />
+          <el-date-picker
+            v-model="form.endDate"
+            type="date"
+            value-format="YYYY-MM-DD"
+            style="width: 100%"
+          />
         </el-form-item>
       </el-form>
       <template #footer>
@@ -48,7 +58,6 @@
 
 <script setup>
 import { onMounted, reactive, ref } from 'vue'
-import { ElMessage, ElMessageBox } from 'element-plus'
 import {
   addSemester,
   deleteSemester,
@@ -107,21 +116,25 @@ async function saveSemester() {
 function setCurrent(row) {
   ElMessageBox.confirm(`确定将 ${row.semesterName} 设为当前学期吗？`, '提示', {
     type: 'warning'
-  }).then(async () => {
-    await setCurrentSemester(row.id)
-    ElMessage.success('设置成功')
-    await loadSemesters()
-  }).catch(() => {})
+  })
+    .then(async () => {
+      await setCurrentSemester(row.id)
+      ElMessage.success('设置成功')
+      await loadSemesters()
+    })
+    .catch(() => {})
 }
 
 function removeSemester(row) {
   ElMessageBox.confirm(`确定删除 ${row.semesterName} 吗？`, '提示', {
     type: 'warning'
-  }).then(async () => {
-    await deleteSemester(row.id)
-    ElMessage.success('删除成功')
-    await loadSemesters()
-  }).catch(() => {})
+  })
+    .then(async () => {
+      await deleteSemester(row.id)
+      ElMessage.success('删除成功')
+      await loadSemesters()
+    })
+    .catch(() => {})
 }
 
 onMounted(loadSemesters)

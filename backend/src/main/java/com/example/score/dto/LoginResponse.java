@@ -12,4 +12,5 @@ public class LoginResponse {
     private String username;
     private String realName;
     private String role;
+    private Integer needChangePassword;
 }

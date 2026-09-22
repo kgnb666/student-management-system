@@ -22,6 +22,9 @@ public class Course {
     private Long semesterId;
     private Long teacherId;
     private Integer status;
+    /** 成绩状态：0 录入中，1 已提交锁定。 */
+    private Integer scoreStatus;
+    private LocalDateTime submitTime;
     private LocalDateTime createTime;
     private LocalDateTime updateTime;
 }

@@ -24,7 +24,12 @@ public class AdminTeacherController {
     private final TeacherService teacherService;
 
     @GetMapping
-    public Result<List<Teacher>> list(@RequestParam(required = false) String keyword) {
+    public Result<?> list(@RequestParam(required = false) String keyword,
+                          @RequestParam(required = false) Long page,
+                          @RequestParam(required = false) Long size) {
+        if (page != null) {
+            return Result.success(teacherService.listPaged(keyword, page, size));
+        }
         return Result.success(teacherService.list(keyword));
     }
 

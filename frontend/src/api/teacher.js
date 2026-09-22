@@ -14,10 +14,27 @@ export function getCourseStatistics(courseId, classId) {
   })
 }
 
-export function getScores(params) {
-  return request.get('/teacher/scores', { params })
-}
-
 export function saveScores(courseId, scores) {
   return request.post('/teacher/scores/batch', { courseId, scores })
+}
+
+export function submitCourseScores(courseId) {
+  return request.post(`/teacher/courses/${courseId}/submit`)
+}
+
+export function exportCourseScores(courseId) {
+  return request.get(`/teacher/courses/${courseId}/scores/export`, { responseType: 'blob' })
+}
+
+export function importCourseScores(courseId, file) {
+  const formData = new FormData()
+  formData.append('file', file)
+  return request.post(`/teacher/courses/${courseId}/scores/import`, formData, {
+    headers: { 'Content-Type': 'multipart/form-data' },
+    timeout: 30000
+  })
+}
+
+export function getCourseScoreLogs(courseId, params) {
+  return request.get(`/teacher/courses/${courseId}/score-logs`, { params })
 }

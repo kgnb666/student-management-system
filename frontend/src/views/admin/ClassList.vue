@@ -35,7 +35,12 @@
         </el-form-item>
         <el-form-item label="班主任">
           <el-select v-model="form.headTeacherId" clearable style="width: 100%">
-            <el-option v-for="item in teachers" :key="item.id" :label="item.name" :value="item.id" />
+            <el-option
+              v-for="item in teachers"
+              :key="item.id"
+              :label="item.name"
+              :value="item.id"
+            />
           </el-select>
         </el-form-item>
       </el-form>
@@ -49,7 +54,6 @@
 
 <script setup>
 import { onMounted, reactive, ref } from 'vue'
-import { ElMessage, ElMessageBox } from 'element-plus'
 import { addClass, deleteClass, getClasses, getTeachers, updateClass } from '../../api/admin'
 
 const loading = ref(false)
@@ -112,11 +116,13 @@ async function saveClass() {
 function removeClass(row) {
   ElMessageBox.confirm(`确定删除 ${row.className} 吗？`, '提示', {
     type: 'warning'
-  }).then(async () => {
-    await deleteClass(row.id)
-    ElMessage.success('删除成功')
-    await loadClasses()
-  }).catch(() => {})
+  })
+    .then(async () => {
+      await deleteClass(row.id)
+      ElMessage.success('删除成功')
+      await loadClasses()
+    })
+    .catch(() => {})
 }
 
 onMounted(() => {

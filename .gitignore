@@ -5,6 +5,13 @@
 backend/target/
 frontend/node_modules/
 frontend/dist/
+frontend/test-results/
+frontend/playwright-report/
 
 *.log
 .DS_Store
+
+# 本地启动配置（含数据库密码），不入库
+start.env
+.env
+.env.local

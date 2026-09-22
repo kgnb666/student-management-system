@@ -3,6 +3,7 @@ package com.example.score.vo;
 import lombok.Data;
 
 import java.math.BigDecimal;
+import java.time.LocalDateTime;
 
 @Data
 public class CourseVO {
@@ -18,4 +19,6 @@ public class CourseVO {
     private Long teacherId;
     private String teacherName;
     private Integer status;
+    private Integer scoreStatus;
+    private LocalDateTime submitTime;
 }

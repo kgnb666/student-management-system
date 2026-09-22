@@ -3,7 +3,7 @@
         "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
 <mapper namespace="com.example.score.mapper.ScoreMapper">
 
-    <select id="selectScoreList" resultType="com.example.score.vo.ScoreVO">
+    <sql id="scoreListQuery">
         SELECT sc.id,
                sc.course_id,
                c.course_code,
@@ -16,12 +16,15 @@
                se.semester_name,
                sc.usual_score,
                sc.exam_score,
-               sc.final_score
+               sc.final_score,
+               sc.update_by,
+               u.real_name AS updater_name
         FROM score sc
                  JOIN course c ON sc.course_id = c.id
                  JOIN student st ON sc.student_id = st.id
                  LEFT JOIN class_info cl ON st.class_id = cl.id
                  JOIN semester se ON c.semester_id = se.id
+                 LEFT JOIN sys_user u ON sc.update_by = u.id
         <where>
             <if test="semesterId != null">
                 AND c.semester_id = #{semesterId}
@@ -42,6 +45,14 @@
             </if>
         </where>
         ORDER BY se.start_date DESC, c.course_code, st.student_no
+    </sql>
+
+    <select id="selectScoreList" resultType="com.example.score.vo.ScoreVO">
+        <include refid="scoreListQuery"/>
+    </select>
+
+    <select id="selectScoreListPage" resultType="com.example.score.vo.ScoreVO">
+        <include refid="scoreListQuery"/>
     </select>
 
     <select id="selectCourseStudents" resultType="com.example.score.vo.CourseStudentVO">
@@ -60,5 +71,51 @@
                  LEFT JOIN score sc ON sc.course_id = cs.course_id AND sc.student_id = st.id
         WHERE cs.course_id = #{courseId}
         ORDER BY st.student_no
+    </select>
+
+    <select id="selectScoreAggregate" resultType="com.example.score.vo.ScoreAggregateVO">
+        SELECT IFNULL(ROUND(AVG(sc.final_score), 1), 0)                                        AS average,
+               IFNULL(MAX(sc.final_score), 0)                                                  AS max,
+               IFNULL(MIN(sc.final_score), 0)                                                  AS min,
+               COUNT(sc.final_score)                                                           AS total,
+               SUM(CASE WHEN sc.final_score &gt;= 60 THEN 1 ELSE 0 END)                            AS pass_count,
+               SUM(CASE WHEN sc.final_score &gt;= 90 THEN 1 ELSE 0 END)                            AS excellent_count,
+               SUM(CASE WHEN sc.final_score &lt; 60 THEN 1 ELSE 0 END)                             AS bucket0,
+               SUM(CASE WHEN sc.final_score &gt;= 60 AND sc.final_score &lt; 70 THEN 1 ELSE 0 END)   AS bucket1,
+               SUM(CASE WHEN sc.final_score &gt;= 70 AND sc.final_score &lt; 80 THEN 1 ELSE 0 END)   AS bucket2,
+               SUM(CASE WHEN sc.final_score &gt;= 80 AND sc.final_score &lt; 90 THEN 1 ELSE 0 END)   AS bucket3,
+               SUM(CASE WHEN sc.final_score &gt;= 90 THEN 1 ELSE 0 END)                            AS bucket4
+        FROM score sc
+                 JOIN course c ON sc.course_id = c.id
+                 JOIN course_student cs ON cs.course_id = sc.course_id AND cs.student_id = sc.student_id
+                 JOIN student st ON sc.student_id = st.id
+        <where>
+            <if test="courseId != null">
+                AND sc.course_id = #{courseId}
+            </if>
+            <if test="classId != null">
+                AND st.class_id = #{classId}
+            </if>
+            <if test="studentId != null">
+                AND sc.student_id = #{studentId}
+            </if>
+            <if test="semesterId != null">
+                AND c.semester_id = #{semesterId}
+            </if>
+        </where>
+    </select>
+
+    <select id="selectStudentCourseScores" resultType="com.example.score.vo.StudentCourseScoreVO">
+        SELECT c.credit,
+               sc.final_score
+        FROM score sc
+                 JOIN course c ON sc.course_id = c.id
+                 JOIN course_student cs ON cs.course_id = sc.course_id AND cs.student_id = sc.student_id
+        WHERE sc.student_id = #{studentId}
+          AND sc.final_score IS NOT NULL
+        <if test="semesterId != null">
+            AND c.semester_id = #{semesterId}
+        </if>
+        ORDER BY c.course_code
     </select>
 </mapper>

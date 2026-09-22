@@ -30,6 +30,8 @@ public class WebConfig implements WebMvcConfigurer {
 
     @Override
     public void addCorsMappings(CorsRegistry registry) {
+        // 前端使用 Authorization 头传递 JWT，不依赖 Cookie，
+        // 因此关闭 allowCredentials，避免与通配来源组合产生放大的跨域授权风险。
         registry.addMapping("/api/**")
                 .allowedOriginPatterns(
                         "http://localhost:*",
@@ -43,6 +45,7 @@ public class WebConfig implements WebMvcConfigurer {
                 )
                 .allowedMethods("GET", "POST", "PUT", "DELETE", "OPTIONS")
                 .allowedHeaders("*")
-                .allowCredentials(true);
+                .allowCredentials(false)
+                .maxAge(3600);
     }
 }

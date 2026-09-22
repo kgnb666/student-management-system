@@ -26,6 +26,7 @@ public class JwtUtil {
                 .subject(user.getUsername())
                 .claim("userId", user.getId())
                 .claim("role", user.getRole())
+                .claim("tokenVersion", user.getTokenVersion() == null ? 0 : user.getTokenVersion())
                 .issuedAt(now)
                 .expiration(new Date(now.getTime() + expiration))
                 .signWith(getKey())

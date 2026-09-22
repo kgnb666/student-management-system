@@ -19,6 +19,8 @@ public class Score {
     private BigDecimal usualScore;
     private BigDecimal examScore;
     private BigDecimal finalScore;
+    /** 最后一次修改成绩的登录用户 id。 */
+    private Long updateBy;
     private LocalDateTime createTime;
     private LocalDateTime updateTime;
 }

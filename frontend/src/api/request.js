@@ -1,5 +1,4 @@
 import axios from 'axios'
-import { ElMessage } from 'element-plus'
 import { clearUser, getToken } from '../auth'
 
 const request = axios.create({
@@ -17,6 +16,10 @@ request.interceptors.request.use((config) => {
 
 request.interceptors.response.use(
   (response) => {
+    // 文件下载（blob）不遵循统一的 Result 包装，直接返回原始数据
+    if (response.config.responseType === 'blob') {
+      return response.data
+    }
     const result = response.data
     if (result.code !== 200) {
       ElMessage.error(result.message || '操作失败')

@@ -1,12 +1,29 @@
 server:
-  port: 8080
+  port: ${SERVER_PORT:8080}
+
+# Tomcat 连接器协议。默认 nio2：部分 Windows + JDK 组合下，标准 NIO 的 loopback
+# 选择器会报 "Unable to establish loopback connection" 导致无法启动。
+# 正常环境（如 Linux 容器）如需使用标准 NIO，设置环境变量 TOMCAT_PROTOCOL=nio 即可。
+tomcat:
+  protocol: ${TOMCAT_PROTOCOL:nio2}
 
 spring:
   datasource:
     driver-class-name: com.mysql.cj.jdbc.Driver
-    url: jdbc:mysql://localhost:3306/student_score?useUnicode=true&characterEncoding=utf8&serverTimezone=Asia/Shanghai&allowPublicKeyRetrieval=true&useSSL=false
-    username: root
-    password: 123456
+    url: '${SPRING_DATASOURCE_URL:jdbc:mysql://localhost:3306/student_score?useUnicode=true&characterEncoding=utf8&serverTimezone=Asia/Shanghai&allowPublicKeyRetrieval=true&useSSL=false}'
+    username: ${SPRING_DATASOURCE_USERNAME:root}
+    password: ${SPRING_DATASOURCE_PASSWORD:123456}
+  servlet:
+    multipart:
+      # 成绩单 Excel 导入的文件大小上限
+      max-file-size: 5MB
+      max-request-size: 5MB
+  flyway:
+    # 数据库结构由 db/migration 下的迁移脚本管理；已存在的库会自动基线化后执行增量
+    enabled: ${FLYWAY_ENABLED:true}
+    baseline-on-migrate: true
+    baseline-version: 0
+    locations: classpath:db/migration
   jackson:
     date-format: yyyy-MM-dd HH:mm:ss
     time-zone: Asia/Shanghai
@@ -14,9 +31,57 @@ spring:
 mybatis-plus:
   configuration:
     map-underscore-to-camel-case: true
-    log-impl: org.apache.ibatis.logging.stdout.StdOutImpl
+    # 交给 slf4j 输出，是否打印每条 SQL 由日志级别控制；需要看 SQL 时启用 dev profile。
+    log-impl: org.apache.ibatis.logging.slf4j.Slf4jImpl
   mapper-locations: classpath*:/mapper/*.xml
 
+logging:
+  level:
+    root: ${LOG_LEVEL_ROOT:INFO}
+    com.example.score: ${LOG_LEVEL_APP:INFO}
+
+management:
+  endpoints:
+    web:
+      exposure:
+        # 只暴露健康检查与基本信息，供部署脚本探活
+        include: health,info
+  endpoint:
+    health:
+      show-details: never
+  info:
+    env:
+      # 让 /actuator/info 暴露 info.app.* ，本项目的启动脚本用它识别「这个端口是不是本项目的后端」
+      enabled: true
+
+info:
+  app:
+    name: student-score
+    description: 学生成绩管理系统
+
+springdoc:
+  api-docs:
+    path: /v3/api-docs
+  swagger-ui:
+    path: /swagger-ui.html
+
 jwt:
-  secret: student-score-system-jwt-secret-key-2026
-  expiration: 86400000
+  # 生产环境请通过环境变量 JWT_SECRET 覆盖，不要使用仓库中的默认值。
+  secret: ${JWT_SECRET:student-score-system-jwt-secret-key-2026}
+  expiration: ${JWT_EXPIRATION:86400000}
+
+security:
+  # 鉴权用户信息缓存时长（毫秒），账号写操作会立即清除缓存
+  auth-cache-millis: ${AUTH_CACHE_MILLIS:30000}
+  login:
+    # 同一账号在锁定窗口内允许的连续失败次数
+    max-attempts: ${LOGIN_MAX_ATTEMPTS:5}
+    # 同一来源 IP 在锁定窗口内允许的连续失败次数
+    ip-max-attempts: ${LOGIN_IP_MAX_ATTEMPTS:20}
+    # 达到阈值后的锁定时长（分钟）
+    lock-minutes: ${LOGIN_LOCK_MINUTES:15}
+  register:
+    # 同一来源 IP 在窗口内允许的注册次数
+    max-per-hour: ${REGISTER_MAX_PER_HOUR:5}
+    # 注册限流窗口（分钟）
+    window-minutes: ${REGISTER_WINDOW_MINUTES:60}

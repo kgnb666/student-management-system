@@ -2,8 +2,19 @@
   <el-card class="page-card" shadow="never">
     <div class="toolbar">
       <span>学期：</span>
-      <el-select v-model="semesterId" clearable placeholder="全部学期" style="width: 230px" @change="loadCourses">
-        <el-option v-for="item in semesters" :key="item.id" :label="item.semesterName" :value="item.id" />
+      <el-select
+        v-model="semesterId"
+        clearable
+        placeholder="全部学期"
+        style="width: 230px"
+        @change="loadCourses"
+      >
+        <el-option
+          v-for="item in semesters"
+          :key="item.id"
+          :label="item.semesterName"
+          :value="item.id"
+        />
       </el-select>
     </div>
 
